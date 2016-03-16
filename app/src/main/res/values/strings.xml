@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">NetCat</string>
+    <string name="wechat_srv_name">WeChat Monitor</string>
 </resources>
