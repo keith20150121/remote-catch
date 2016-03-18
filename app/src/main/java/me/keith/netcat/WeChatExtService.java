@@ -5,19 +5,30 @@ import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
+import android.app.Notification;
+import android.app.PendingIntent;
 
 import java.util.List;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
- * Created by swd3 on 3/16/16.
+ * Created by Keith on 3/16/16.
  */
-public class WeChatExtService extends AccessibilityService {
+public class WeChatExtService extends AccessibilityService implements IServiceRequest {
     public static String TAG = "WeChatExtService";
     public static String WECHAT = "com.tencent.mm";
+
+    private CatLeader m_cl = new CatLeader(this);
 
     @Override
     public void onInterrupt() {
 
+    }
+
+    @Override
+    protected void onServiceConnected() {
+        super.onServiceConnected();
+        m_cl.setTransferTarget("Keith");
     }
 
     @Override
@@ -26,69 +37,85 @@ public class WeChatExtService extends AccessibilityService {
         Log.d(TAG, "event coming:" + e);
         switch (type) {
             case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
-                accessNotification(e);
+                peekNotification(e);
+                jump(e);
                 break;
             case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
-                accessWindow(e);
+                traverseWindow(e);
                 break;
         }
     }
 
-    public static void print(AccessibilityNodeInfo node) {
-        Log.d(TAG, String.format("Class:%s, Text:%s",
-                String.valueOf(node.getClassName()),
-                String.valueOf(node.getText())));
+    @Override
+    public void home() {
+        performGlobalAction(GLOBAL_ACTION_HOME);
     }
 
-    public static void traverseNode(AccessibilityNodeInfo node) {
-        print(node);
-        final int count = node.getChildCount();
-        for (int i = 0; i < count; ++i) {
-            traverseNode(node.getChild(i));
+    @Override
+    public void back() {
+        performGlobalAction(GLOBAL_ACTION_BACK);
+    }
+
+    public static void process(int level, AccessibilityNodeInfo node) {
+        final String clz = String.valueOf(node.getClassName());
+        final String text = String.valueOf(node.getText());
+        StringBuffer sb = new StringBuffer();
+        while (level-- > 0) {
+            sb.append('\t');
         }
+        Log.d(TAG, String.format("%sClass:%s, Text:%s", sb.toString(), clz, text));
     }
 
-    private void accessWindow(AccessibilityEvent e) {
+    public boolean traverseNode(int level, AccessibilityNodeInfo node) {
+        if (null == node) {
+            return false;
+        }
+        process(level, node);
+        if (!m_cl.onTraversing(level, node)) {
+            return false;
+        }
+        final int count = node.getChildCount();
+        level += 1;
+        for (int i = 0; i < count; ++i) {
+            if (!traverseNode(level, node.getChild(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void traverseWindow(AccessibilityEvent e) {
         Log.d(TAG, String.valueOf(e.getClassName()));
         AccessibilityNodeInfo node = getRootInActiveWindow();
         if (node == null) {
             Log.w(TAG, "rootWindow is null!");
             return;
         }
-        traverseNode(node);
-        /*
-        List<AccessibilityNodeInfo> list = nodeInfo.findAccessibilityNodeInfosByText("领取红包");
-        if(list.isEmpty()) {
-            list = nodeInfo.findAccessibilityNodeInfosByText(HONGBAO_TEXT_KEY);
-            for(AccessibilityNodeInfo n : list) {
-                Log.i(TAG, "-->微信红包:" + n);
-                n.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                break;
-            }
-        } else {
-            //最新的红包领起
-            for(int i = list.size() - 1; i >= 0; i --) {
-                AccessibilityNodeInfo parent = list.get(i).getParent();
-                Log.i(TAG, "-->领取红包:" + parent);
-                if(parent != null) {
-                    parent.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                    break;
-                }
-            }
-        }
-        */
+        traverseNode(0, node);
+        m_cl.onTraversed();
     }
 
-    private void accessNotification(AccessibilityEvent e) {
+    private void jump(AccessibilityEvent e) {
+        if (e.getParcelableData() == null || !(e.getParcelableData() instanceof Notification)) {
+            return;
+        }
+        Notification notification = (Notification)e.getParcelableData();
+        PendingIntent pendingIntent = notification.contentIntent;
+        try {
+            pendingIntent.send();
+        } catch (PendingIntent.CanceledException exp) {
+            exp.printStackTrace();
+        }
+    }
+
+    private void peekNotification(AccessibilityEvent e) {
         if (null == e) {
             return;
         }
-
         List<CharSequence> txts = e.getText();
         if (null == txts) {
             return;
         }
-
         for (CharSequence cs : txts) {
             final String txt = String.valueOf(cs);
             Toast.makeText(this, txt, Toast.LENGTH_SHORT).show();
