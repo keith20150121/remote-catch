@@ -6,4 +6,5 @@ package me.keith.netcat;
 public interface IServiceRequest {
     void home();
     void back();
+    void traverse();
 }

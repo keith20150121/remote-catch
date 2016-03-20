@@ -1,15 +1,17 @@
 package me.keith.netcat;
 
 import android.accessibilityservice.AccessibilityService;
+import android.app.Notification;
+import android.app.PendingIntent;
+import android.os.Handler;
+import android.os.Message;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
-import android.app.Notification;
-import android.app.PendingIntent;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Keith on 3/16/16.
@@ -18,31 +20,70 @@ public class WeChatExtService extends AccessibilityService implements IServiceRe
     public static String TAG = "WeChatExtService";
     public static String WECHAT = "com.tencent.mm";
 
-    private CatLeader m_cl = new CatLeader(this);
+    private IWinCat m_cl = new HeadCat(this);
+
+    static class DelayHandler extends Handler {
+        public static final int DELAY_TRAVERSE = 90;
+        public static final int DELAY_JUMP_NOTIFICATION = 91;
+        private WeakReference<WeChatExtService> m_service;
+
+        public DelayHandler(WeChatExtService service) {
+            m_service = new WeakReference<WeChatExtService>(service);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+            WeChatExtService service = m_service.get();
+            switch (msg.what) {
+                case DELAY_TRAVERSE:
+                    if (null != service) {
+                        AccessibilityEvent e = (AccessibilityEvent)msg.obj;
+                        service.traverseWindow(e);
+                    }
+                    break;
+                case DELAY_JUMP_NOTIFICATION:
+                    if (null != service) {
+                        AccessibilityEvent e = (AccessibilityEvent)msg.obj;
+                        service.jump(e);
+                    }
+                    break;
+                default:
+                    super.handleMessage(msg);
+            }
+        }
+    }
+
+    private DelayHandler m_handler = new DelayHandler(this);
+    private AccessibilityEvent m_cache;
 
     @Override
     public void onInterrupt() {
-
     }
 
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
-        m_cl.setTransferTarget("Keith");
     }
 
     @Override
     public void onAccessibilityEvent(AccessibilityEvent e) {
         final int type = e.getEventType();
+        m_cache = e;
         Log.d(TAG, "event coming:" + e);
         switch (type) {
-            case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED:
+            case AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED: {
                 peekNotification(e);
+                //Message msg = m_handler.obtainMessage(DelayHandler.DELAY_JUMP_NOTIFICATION, e);
+                //m_handler.sendMessageDelayed(msg, 1000);
                 jump(e);
                 break;
-            case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED:
-                traverseWindow(e);
+            }
+            case AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED: {
+                Message msg = m_handler.obtainMessage(DelayHandler.DELAY_TRAVERSE, e);
+                m_handler.sendMessageDelayed(msg, 300);
+                //traverseWindow(e);
                 break;
+            }
         }
     }
 
@@ -54,6 +95,11 @@ public class WeChatExtService extends AccessibilityService implements IServiceRe
     @Override
     public void back() {
         performGlobalAction(GLOBAL_ACTION_BACK);
+    }
+
+    @Override
+    public void traverse() {
+        traverseWindow(m_cache);
     }
 
     public static void process(int level, AccessibilityNodeInfo node) {
@@ -85,7 +131,12 @@ public class WeChatExtService extends AccessibilityService implements IServiceRe
     }
 
     private void traverseWindow(AccessibilityEvent e) {
-        Log.d(TAG, String.valueOf(e.getClassName()));
+        if (e != null) {
+            Log.d(TAG, String.valueOf(e.getClassName()));
+        }
+        if (!m_cl.onNeedTraverse()) {
+            return;
+        }
         AccessibilityNodeInfo node = getRootInActiveWindow();
         if (node == null) {
             Log.w(TAG, "rootWindow is null!");
