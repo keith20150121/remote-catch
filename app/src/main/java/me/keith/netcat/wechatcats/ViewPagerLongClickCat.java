@@ -5,7 +5,7 @@ import android.support.annotation.NonNull;
 import me.keith.netcat.EmptyCat;
 import me.keith.netcat.IServiceRequest;
 import me.keith.netcat.IWinCat;
-import me.keith.netcat.IWinCatLeader;
+import me.keith.netcat.ICatLeader;
 
 /**
  * Created by Keith on 2016/3/20.
@@ -14,7 +14,7 @@ public class ViewPagerLongClickCat extends EmptyCat {
 
     private final IServiceRequest m_sr;
 
-    public ViewPagerLongClickCat(@NonNull IWinCatLeader parent,
+    public ViewPagerLongClickCat(@NonNull ICatLeader parent,
                                  @NonNull IWinCat next,
                                  @NonNull IServiceRequest sr) {
         super(parent, next);

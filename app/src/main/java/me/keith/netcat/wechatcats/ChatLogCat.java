@@ -10,7 +10,7 @@ import java.util.Stack;
 import me.keith.netcat.EmptyCat;
 import me.keith.netcat.IServiceRequest;
 import me.keith.netcat.IWinCat;
-import me.keith.netcat.IWinCatLeader;
+import me.keith.netcat.ICatLeader;
 
 /**
  * Created by Keith on 3/18/16.
@@ -20,7 +20,7 @@ public class ChatLogCat extends EmptyCat {
     private AccessibilityNodeInfo m_cached;
     private IServiceRequest m_sr;
 
-    public ChatLogCat(@NonNull IWinCatLeader parent, IWinCat next, @NonNull IServiceRequest sr) {
+    public ChatLogCat(@NonNull ICatLeader parent, IWinCat next, @NonNull IServiceRequest sr) {
         super(parent, next);
         m_sr = sr;
     }

@@ -9,7 +9,7 @@ import java.util.Stack;
 import me.keith.netcat.EmptyCat;
 import me.keith.netcat.IServiceRequest;
 import me.keith.netcat.IWinCat;
-import me.keith.netcat.IWinCatLeader;
+import me.keith.netcat.ICatLeader;
 
 /**
  * Created by Keith on 3/18/16.
@@ -24,7 +24,7 @@ public class MenuClickCat extends EmptyCat {
     private final IWinCat m_viewPagerCat;
     private final IServiceRequest m_sr;
 
-    public MenuClickCat(@NonNull IWinCatLeader parent,
+    public MenuClickCat(@NonNull ICatLeader parent,
                         @NonNull IWinCat next,
                         @NonNull final String text,
                         @NonNull final IServiceRequest sr,

@@ -10,7 +10,7 @@ import me.keith.netcat.wechatcats.MenuClickCat;
 /**
  * Created by Keith on 2016/3/20.
  */
-public class HeadCat implements IWinCatLeader, IWinCat {
+public class HeadCat implements ICatLeader, IWinCat {
 
     private final IServiceRequest m_sr;
     private final ChatLogCat m_first;
@@ -26,11 +26,6 @@ public class HeadCat implements IWinCatLeader, IWinCat {
         IWinCat repost = new MenuClickCat(this, keith, "转发", sr, true);
         m_first.setNext(repost);
         m_cat = m_first;
-    }
-
-    @Override
-    public void pass(Object obj) {
-
     }
 
     @Override

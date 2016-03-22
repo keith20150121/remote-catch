@@ -3,7 +3,7 @@ package me.keith.netcat;
 /**
  * Created by Keith on 3/18/16.
  */
-public class CatLeader {/* extends EmptyCat implements IWinCatLeader {
+public class CatLeader {/* extends EmptyCat implements ICatLeader {
     public final static String TAG = "CatsLoader";
 
     private String m_Receiver;

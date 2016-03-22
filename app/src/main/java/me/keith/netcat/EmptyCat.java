@@ -14,10 +14,10 @@ public abstract class EmptyCat implements IWinCat {
     public final static String IMAGE_VIEW = "android.widget.ImageView";
     public final static String VIEW_PAGER = "android.support.v4.view.ViewPager";
 
-    protected IWinCatLeader m_parent;
+    protected ICatLeader m_parent;
     protected IWinCat m_next;
 
-    public EmptyCat(IWinCatLeader parent, IWinCat next) {
+    public EmptyCat(ICatLeader parent, IWinCat next) {
         m_parent = parent;
         m_next = next;
     }
